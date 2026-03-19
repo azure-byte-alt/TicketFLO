@@ -4,112 +4,517 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TicketFLO - Practice Writing Better Help Desk Tickets</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 0; background: #f7f7f7; }
-    .wrap { max-width: 900px; margin: 0 auto; padding: 48px 20px; }
-    .card { background: white; border-radius: 14px; padding: 32px; box-shadow: 0 10px 24px rgba(0,0,0,0.08); }
-    .tag { display: inline-block; padding: 6px 12px; border-radius: 999px; background: #eef2ff; font-size: 14px; }
-    h1 { margin: 14px 0 6px; font-size: 44px; }
-    h2 { margin: 0 0 14px; font-weight: 600; color: #444; }
-    p { font-size: 18px; color: #333; line-height: 1.5; }
-    ul { margin: 12px 0 0; padding-left: 18px; color: #333; }
-    li { margin: 8px 0; }
-    .btn {
+    :root {
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --surface2: #f0f2f5;
+      --border: #dde1e7;
+      --accent: #00b894;
+      --accent2: #e17055;
+      --text: #1a202c;
+      --muted: #718096;
+      --good: #27ae60;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* NAV */
+    nav {
+      background: #ffffff;
+      border-bottom: 2px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { font-family: 'IBM Plex Mono', monospace; font-size: 1.3rem; font-weight: 600; color: var(--accent); letter-spacing: -0.5px; }
+    .logo span { color: var(--text); }
+    .nav-badge { background: var(--accent2); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; letter-spacing: 1px; text-transform: uppercase; }
+    .nav-links { margin-left: auto; display: flex; gap: 8px; }
+    .nav-link { font-size: 0.85rem; color: var(--muted); text-decoration: none; padding: 6px 14px; border-radius: 6px; transition: all 0.15s; font-weight: 500; }
+    .nav-link:hover { background: var(--surface2); color: var(--text); }
+    .nav-link.active { color: var(--accent); background: rgba(0,184,148,0.08); }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #ffffff 0%, #f0faf7 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 72px 24px 64px;
+      text-align: center;
+    }
+    .hero-tag {
       display: inline-block;
-      margin-top: 20px;
-      padding: 12px 18px;
-      border-radius: 10px;
-      border: none;
-      background: #111827;
+      background: rgba(0,184,148,0.1);
+      border: 1px solid rgba(0,184,148,0.3);
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-family: 'IBM Plex Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 5px 16px;
+      border-radius: 99px;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 18px;
+      line-height: 1.15;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: 1.1rem;
+      color: var(--muted);
+      max-width: 580px;
+      margin: 0 auto 40px;
+      line-height: 1.75;
+    }
+    .hero-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--accent);
       color: white;
-      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      padding: 14px 32px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: 'IBM Plex Sans', sans-serif;
       cursor: pointer;
       text-decoration: none;
+      display: inline-block;
+      transition: all 0.15s;
     }
-    .btn:hover { opacity: 0.92; }
-    .footer { margin-top: 16px; font-size: 14px; color: #666; }
+    .btn-primary:hover { background: #00a381; transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,184,148,0.3); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 13px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: 'IBM Plex Sans', sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* STATS BAR */
+    .stats-bar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+    .stat-item { text-align: center; }
+    .stat-num { font-size: 1.5rem; font-weight: 700; color: var(--text); font-family: 'IBM Plex Mono', monospace; }
+    .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+    /* MAIN */
+    .container { max-width: 960px; margin: 0 auto; padding: 56px 24px; }
+
+    /* HOW IT WORKS */
+    .section-title { font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; }
+    .section-sub { font-size: 0.95rem; color: var(--muted); margin-bottom: 36px; line-height: 1.6; }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 56px;
+    }
+    .step-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: box-shadow 0.2s;
+    }
+    .step-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .step-num {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .step-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
+    .step-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.55; }
+
+    /* CATEGORIES */
+    .categories-section { margin-bottom: 56px; }
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+    }
+    .cat-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .cat-icon { font-size: 1.5rem; margin-bottom: 8px; }
+    .cat-name { font-size: 0.88rem; font-weight: 700; margin-bottom: 4px; }
+    .cat-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+    /* WHY TICKETFLO */
+    .why-section {
+      background: linear-gradient(135deg, #f0faf7 0%, #ffffff 100%);
+      border: 2px solid rgba(0,184,148,0.2);
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 56px;
+    }
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 28px;
+    }
+    .why-item { display: flex; align-items: flex-start; gap: 12px; }
+    .why-check {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .why-text { font-size: 0.9rem; line-height: 1.55; color: var(--text); }
+    .why-text strong { display: block; font-weight: 700; margin-bottom: 2px; }
+
+    /* AI BADGE SECTION */
+    .ai-section {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 36px;
+      margin-bottom: 56px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      flex-wrap: wrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .ai-icon-wrap {
+      width: 72px; height: 72px;
+      border-radius: 16px;
+      background: rgba(0,184,148,0.1);
+      border: 2px solid rgba(0,184,148,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+    .ai-content { flex: 1; min-width: 200px; }
+    .ai-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .ai-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
+    .ai-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+
+    /* WHO IS IT FOR */
+    .who-section { margin-bottom: 56px; }
+    .who-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+    }
+    .who-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 18px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .who-emoji { font-size: 1.6rem; margin-bottom: 10px; }
+    .who-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 5px; }
+    .who-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+
+    /* CTA */
+    .cta-section {
+      background: var(--accent);
+      border-radius: 16px;
+      padding: 48px 40px;
+      text-align: center;
+      color: white;
+    }
+    .cta-section h2 { font-size: 1.8rem; font-weight: 700; margin-bottom: 12px; }
+    .cta-section p { font-size: 1rem; opacity: 0.85; margin-bottom: 28px; line-height: 1.6; max-width: 500px; margin-left: auto; margin-right: auto; }
+    .btn-white {
+      background: white;
+      color: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 14px 36px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: 'IBM Plex Sans', sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.15s;
+      margin: 6px;
+    }
+    .btn-white:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+    .btn-white-outline {
+      background: transparent;
+      color: white;
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 8px;
+      padding: 13px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: 'IBM Plex Sans', sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.15s;
+      margin: 6px;
+    }
+    .btn-white-outline:hover { border-color: white; background: rgba(255,255,255,0.1); }
+
+    /* FOOTER */
+    footer {
+      background: #ffffff;
+      border-top: 1px solid var(--border);
+      padding: 24px 32px;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
   </style>
-
-
-
-  </head>
-
+</head>
 <body>
 
-<nav style="display:flex; justify-content:space-between; align-items:center; padding:16px 24px; background:#0f172a; color:white;">
-  
-  <div style="font-weight:bold; font-size:20px;">
-    TicketFLO
+<!-- NAV -->
+<nav>
+  <div class="logo">Ticket<span>FLO</span></div>
+  <div class="nav-badge">Training Tool</div>
+  <div class="nav-links">
+    <a class="nav-link active" href="index.html">Home</a>
+    <a class="nav-link" href="ticket-guide.html">Learn</a>
+    <a class="nav-link" href="helpdesk-practice.html">Practice</a>
+    <a class="nav-link" href="results.html">Results</a>
   </div>
-
-  <div style="display:flex; gap:20px;">
-    <a href="index.html" style="color:white; text-decoration:none;">Home</a>
-    <a href="helpdesk-practice.html" style="color:white; text-decoration:none;">Practice</a>
-    <a href="results.html" style="color:white; text-decoration:none;">Results</a>
-  </div>
-
 </nav>
-  <div class="wrap">
-    <div class="card">
-      <span class="tag">Tier 1 Help Desk Ticket Writing Trainer</span>
 
-      <h1>TicketFLO</h1>
-      <h2>Practice Writing Better Help Desk Tickets</h2>
-      <p>
-A training platform that helps IT support professionals practice writing clear, professional, and complete help desk tickets.
-        <h2>Why Use TicketFLO</h2>
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Tier 1 Help Desk Ticket Writing Trainer</div>
+  <h1>Write Better Tickets.<br><span>Get Hired Faster.</span></h1>
+  <p>TicketFLO is an AI-powered training platform that helps IT support professionals practice writing clear, complete, and professional help desk tickets — with real feedback on every submission.</p>
+  <div class="hero-btns">
+    <a class="btn-primary" href="ticket-guide.html">Start Here — Learn the Basics →</a>
+    <a class="btn-secondary" href="helpdesk-practice.html">Jump to Practice</a>
+  </div>
+</div>
 
-<ul>
-<li>Practice real help desk scenarios</li>
-<li>Improve ticket documentation skills</li>
-<li>Receive QA-style feedback</li>
-<li>Prepare for real IT support jobs</li>
-</ul>
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-num">15</div>
+    <div class="stat-label">Real IT Scenarios</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">6</div>
+    <div class="stat-label">Ticket Fields Covered</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">AI</div>
+    <div class="stat-label">Powered Feedback</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">$9.99</div>
+    <div class="stat-label">One-Time — Lifetime Access</div>
+  </div>
+</div>
 
+<div class="container">
 
-<h2>How TicketFLO Works</h2>
+  <!-- HOW IT WORKS -->
+  <div class="section-title">How TicketFLO Works</div>
+  <div class="section-sub">Three simple steps to sharpen your ticket writing skills and prepare for real IT support jobs.</div>
 
-<ol>
-<li>Read the IT support scenario.</li>
-<li>Write your help desk ticket response.</li>
-<li>Click Submit.</li>
-<li>Receive a score based on ticket quality.</li>
-</ol>
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">1</div>
+      <div class="step-title">Learn the Fields</div>
+      <div class="step-desc">Start with our Ticket Writing Guide — understand what each field means and why it matters before you practice.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">2</div>
+      <div class="step-title">Read the Scenario</div>
+      <div class="step-desc">Get a real IT support call scenario with caller details, the issue, and any error messages reported.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">3</div>
+      <div class="step-title">Write Your Ticket</div>
+      <div class="step-desc">Fill in all the fields — subject, priority, category, description, steps taken, and next action.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">4</div>
+      <div class="step-title">Get AI Feedback</div>
+      <div class="step-desc">Submit and receive instant AI-powered coaching — strengths, improvements, and a personal coach note.</div>
+    </div>
+  </div>
 
+  <!-- AI SECTION -->
+  <div class="ai-section">
+    <div class="ai-icon-wrap">🤖</div>
+    <div class="ai-content">
+      <div class="ai-label">Powered by Claude AI</div>
+      <div class="ai-title">Real Feedback — Not Just a Score</div>
+      <div class="ai-desc">Most training tools just tell you pass or fail. TicketFLO's AI Coach reads your actual ticket, compares it to the scenario, and gives you specific, personalized feedback — just like a real supervisor reviewing your work. It points out exactly what you did well and exactly what to improve.</div>
+    </div>
+  </div>
 
-<h2>Practice Categories</h2>
-
-
-<ul>
-<li><strong>Access Issues</strong> – password resets, locked accounts, MFA problems</li>
-<li><strong>Email Issues</strong> – Outlook problems, mailbox access, send/receive issues</li>
-<li><strong>Hardware Issues</strong> – printer, laptop, monitor problems</li>
-<li><strong>Network / Remote Access</strong> – Wi-Fi, VPN, internet connection issues</li>
-<li><strong>Software Issues</strong> – applications crashing, install requests, login errors</li>
-</ul>
-
-
-
-
-      <p>
-        A simple practice tool to help Tier 1 agents write clear, complete tickets that improve
-        documentation quality and support better QA/Wa scores.
-      </p>
-
-      <p><strong>TicketFLO helps you practice:</strong></p>
-      <ul>
-        <li>Probing questions (what, when, who, where)</li>
-        <li>Troubleshooting steps and results</li>
-        <li>Device + user details (so Tier 2 can take over fast)</li>
-        <li>Clean, professional ticket notes</li>
-      </ul>
-
-      <a class="btn" href="helpdesk-practice.html">Start Practicing</a>
-
-      <div class="footer">
-        Built for new agents, offshore agents, and anyone who wants stronger ticket writing.
+  <!-- CATEGORIES -->
+  <div class="categories-section">
+    <div class="section-title">Practice Categories</div>
+    <div class="section-sub">15 scenarios across the most common Tier 1 help desk issue types.</div>
+    <div class="cat-grid">
+      <div class="cat-card">
+        <div class="cat-icon">🔐</div>
+        <div class="cat-name">Account / Access</div>
+        <div class="cat-desc">Password resets, locked accounts, MFA problems, identity verification</div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon">📧</div>
+        <div class="cat-name">Email Issues</div>
+        <div class="cat-desc">Outlook problems, mailbox access, send/receive issues, offline mode</div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon">💻</div>
+        <div class="cat-name">Hardware</div>
+        <div class="cat-desc">Laptop, monitor, battery, overheating, display artifacts, physical damage</div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon">🌐</div>
+        <div class="cat-name">Network / Remote</div>
+        <div class="cat-desc">Wi-Fi, VPN, VDI, internet connectivity, web filtering, shared drives</div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon">⚙️</div>
+        <div class="cat-name">Software</div>
+        <div class="cat-desc">Application crashes, install requests, login errors, updates gone wrong</div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon">🔒</div>
+        <div class="cat-name">Security</div>
+        <div class="cat-desc">BitLocker recovery, suspicious activity, security escalations</div>
       </div>
     </div>
   </div>
+
+  <!-- WHY TICKETFLO -->
+  <div class="why-section">
+    <div class="why-section">
+      <div class="section-title">Why Use TicketFLO?</div>
+      <div class="section-sub">Built specifically for new agents, offshore agents, and anyone who wants stronger documentation skills.</div>
+    </div>
+    <div class="why-grid">
+      <div class="why-item">
+        <div class="why-check">✓</div>
+        <div class="why-text"><strong>Practice real scenarios</strong>The same types of calls you'll get on day one of a help desk job.</div>
+      </div>
+      <div class="why-item">
+        <div class="why-check">✓</div>
+        <div class="why-text"><strong>Learn the 5 Golden Questions</strong>WHO, WHAT, WHEN, WHY, and WHAT WAS TRIED — the foundation of every great ticket.</div>
+      </div>
+      <div class="why-item">
+        <div class="why-check">✓</div>
+        <div class="why-text"><strong>AI Coach feedback</strong>Not just a checklist — real coaching that reads your actual words and responds to them.</div>
+      </div>
+      <div class="why-item">
+        <div class="why-check">✓</div>
+        <div class="why-text"><strong>Prepare for QA reviews</strong>Write tickets that pass quality audits and impress supervisors from day one.</div>
+      </div>
+      <div class="why-item">
+        <div class="why-check">✓</div>
+        <div class="why-text"><strong>Model answers included</strong>See exactly what a perfect ticket looks like for every scenario after you submit.</div>
+      </div>
+      <div class="why-item">
+        <div class="why-check">✓</div>
+        <div class="why-text"><strong>One-time payment</strong>$9.99 for lifetime access — no subscriptions, no hidden fees.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHO IS IT FOR -->
+  <div class="who-section">
+    <div class="section-title">Who Is TicketFLO For?</div>
+    <div class="section-sub">Anyone who works in or wants to break into IT support.</div>
+    <div class="who-grid">
+      <div class="who-card">
+        <div class="who-emoji">🎓</div>
+        <div class="who-title">New IT Agents</div>
+        <div class="who-desc">Just starting your first help desk job? Build the documentation habits that make you stand out from day one.</div>
+      </div>
+      <div class="who-card">
+        <div class="who-emoji">🌍</div>
+        <div class="who-title">Offshore Agents</div>
+        <div class="who-desc">Practice writing clear, professional tickets in English — the kind that Tier 2 teams love to receive.</div>
+      </div>
+      <div class="who-card">
+        <div class="who-emoji">📚</div>
+        <div class="who-title">IT Students</div>
+        <div class="who-desc">Studying for CompTIA or preparing for your first IT interview? Real ticket writing is a skill you need.</div>
+      </div>
+      <div class="who-card">
+        <div class="who-emoji">📈</div>
+        <div class="who-title">Experienced Agents</div>
+        <div class="who-desc">Want to improve your QA scores or prepare for a Tier 2 promotion? Sharpen your documentation skills here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <h2>Ready to Level Up Your Ticket Writing?</h2>
+    <p>Start with the free Ticket Writing Guide, then practice with real scenarios and get AI Coach feedback on every ticket.</p>
+    <a class="btn-white" href="ticket-guide.html">Start Here — Learn the Basics →</a>
+    <a class="btn-white-outline" href="helpdesk-practice.html">Jump to Practice</a>
+  </div>
+
+</div>
+
+<footer>
+  Built for new agents, offshore agents, and anyone who wants stronger ticket writing. &nbsp;·&nbsp; TicketFLO © 2025
+</footer>
+
 </body>
 </html>
