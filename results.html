@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TicketFLO Training – Results & Feedback</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f6f9; --surface: #ffffff; --surface2: #f0f2f5;
+    --border: #dde1e7; --accent: #00b894; --accent2: #e17055;
+    --text: #1a202c; --muted: #718096; --good: #27ae60;
+    --warn: #f0a500; --bad: #e74c3c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; min-height: 100vh; }
+
+  header { background: #ffffff; border-bottom: 2px solid var(--border); padding: 16px 32px; display: flex; align-items: center; gap: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 100; }
+  .logo { font-family: 'IBM Plex Mono', monospace; font-size: 1.3rem; font-weight: 600; color: var(--accent); letter-spacing: -0.5px; }
+  .logo span { color: var(--text); }
+  .badge { background: var(--accent2); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; letter-spacing: 1px; text-transform: uppercase; }
+  .header-nav { margin-left: auto; display: flex; gap: 6px; }
+  .nav-link { font-size: 0.82rem; color: var(--muted); text-decoration: none; padding: 5px 12px; border-radius: 6px; transition: all 0.15s; }
+  .nav-link:hover { background: var(--surface2); color: var(--text); }
+  .nav-link.active { color: var(--accent); background: rgba(0,184,148,0.08); }
+
+  .container { max-width: 860px; margin: 0 auto; padding: 48px 24px; }
+
+  .page-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; }
+  .page-sub { font-size: 0.95rem; color: var(--muted); margin-bottom: 40px; line-height: 1.6; }
+
+  .sec-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+  .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* CHECKLIST */
+  .checklist-card { background: #ffffff; border: 1.5px solid var(--border); border-radius: 12px; padding: 24px 28px; margin-bottom: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .checklist-card h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 16px; }
+  .check-items { display: flex; flex-direction: column; gap: 10px; }
+  .check-item { display: flex; align-items: flex-start; gap: 12px; font-size: 0.92rem; color: var(--text); line-height: 1.55; }
+  .check-icon { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+  /* EXAMPLE TICKET */
+  .example-card { background: #ffffff; border: 1.5px solid var(--border); border-left: 4px solid var(--accent); border-radius: 12px; padding: 24px 28px; margin-bottom: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .example-card h3 { font-size: 0.75rem; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 16px; }
+  .ticket-field { display: flex; gap: 12px; margin-bottom: 12px; font-size: 0.9rem; line-height: 1.6; }
+  .ticket-field:last-child { margin-bottom: 0; }
+  .field-label { font-weight: 700; color: var(--text); min-width: 110px; flex-shrink: 0; }
+  .field-value { color: var(--muted); }
+
+  /* SCORECARD */
+  .scorecard { background: #ffffff; border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .scorecard-header { background: var(--surface2); padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .scorecard-title { font-size: 1rem; font-weight: 700; }
+  .total-score { font-family: 'IBM Plex Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+  .score-rows { padding: 0 24px; }
+  .score-row { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .score-row:last-child { border-bottom: none; }
+  .score-name { flex: 1; font-size: 0.9rem; color: var(--text); }
+  .score-val { font-family: 'IBM Plex Mono', monospace; font-size: 0.88rem; font-weight: 600; min-width: 52px; text-align: right; }
+  .score-bar-wrap { width: 120px; height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 99px; background: var(--accent); }
+
+  /* CTA */
+  .cta-section { background: #ffffff; border: 1.5px solid var(--border); border-radius: 14px; padding: 36px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .cta-section h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; }
+  .cta-section p { color: var(--muted); font-size: 0.92rem; margin-bottom: 24px; line-height: 1.65; max-width: 480px; margin-left: auto; margin-right: auto; }
+  .btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary { background: var(--accent); color: #0d1117; border: none; border-radius: 8px; padding: 12px 28px; font-size: 0.95rem; font-weight: 700; font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.15s; }
+  .btn-primary:hover { background: #00a381; transform: translateY(-1px); }
+  .btn-secondary { background: transparent; color: var(--text); border: 2px solid var(--border); border-radius: 8px; padding: 11px 24px; font-size: 0.95rem; font-weight: 600; font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.15s; }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Ticket<span>FLO</span> Training</div>
+  <div class="badge">Training Tool</div>
+  <nav class="header-nav">
+    <a class="nav-link" href="index.html">Home</a>
+    <a class="nav-link" href="ticket-guide.html">Learn</a>
+    <a class="nav-link" href="helpdesk-practice.html">Practice</a>
+    <a class="nav-link active" href="results.html">Results</a>
+  </nav>
+</header>
+
+<div class="container">
+
+  <div class="page-title">TicketFLO Training Feedback</div>
+  <div class="page-sub">Review what makes a great help desk ticket, see an example, and check your QA scorecard below.</div>
+
+  <div class="sec-label">What a Good Ticket Includes</div>
+  <div class="checklist-card">
+    <h2>Every strong help desk ticket should cover these 5 elements:</h2>
+    <div class="check-items">
+      <div class="check-item"><div class="check-icon">✓</div>Clear description of the issue — what is happening, exactly</div>
+      <div class="check-item"><div class="check-icon">✓</div>Error message if one appeared — copied word for word</div>
+      <div class="check-item"><div class="check-icon">✓</div>Device or system affected — laptop model, OS, application name</div>
+      <div class="check-item"><div class="check-icon">✓</div>Steps already attempted — by the user and by you, with outcomes</div>
+      <div class="check-item"><div class="check-icon">✓</div>Business impact — deadline, meeting, payroll, or other urgency</div>
+    </div>
+  </div>
+
+  <div class="sec-label">Example of a Strong Ticket</div>
+  <div class="example-card">
+    <h3>✦ Sample Ticket — VPN Issue</h3>
+    <div class="ticket-field"><span class="field-label">Issue:</span><span class="field-value">User unable to connect to VPN</span></div>
+    <div class="ticket-field"><span class="field-label">Description:</span><span class="field-value">User reports VPN connection fails with authentication error "Login failed." User changed network password yesterday after system prompt. No VPN issues prior to password change.</span></div>
+    <div class="ticket-field"><span class="field-label">Device:</span><span class="field-value">Windows 10 laptop — remote user, Work From Home</span></div>
+    <div class="ticket-field"><span class="field-label">Troubleshooting:</span><span class="field-value">Verified internet connection is active. Advised user to update VPN credentials with new password and retry — issue persists.</span></div>
+    <div class="ticket-field"><span class="field-label">Impact:</span><span class="field-value">User unable to access any company resources remotely. Team meeting in 45 minutes requiring file access.</span></div>
+  </div>
+
+  <div class="sec-label">QA Scorecard</div>
+  <div class="scorecard">
+    <div class="scorecard-header">
+      <div class="scorecard-title">TicketFLO Training QA Scorecard</div>
+      <div class="total-score">86 / 100</div>
+    </div>
+    <div class="score-rows">
+      <div class="score-row">
+        <span class="score-name">Problem Description Clear</span>
+        <div class="score-bar-wrap"><div class="score-bar-fill" style="width:90%"></div></div>
+        <span class="score-val" style="color:var(--good)">18 / 20</span>
+      </div>
+      <div class="score-row">
+        <span class="score-name">Probing Questions Included</span>
+        <div class="score-bar-wrap"><div class="score-bar-fill" style="width:75%"></div></div>
+        <span class="score-val" style="color:var(--warn)">15 / 20</span>
+      </div>
+      <div class="score-row">
+        <span class="score-name">Troubleshooting Steps Documented</span>
+        <div class="score-bar-wrap"><div class="score-bar-fill" style="width:100%"></div></div>
+        <span class="score-val" style="color:var(--good)">20 / 20</span>
+      </div>
+      <div class="score-row">
+        <span class="score-name">User / Device Details Included</span>
+        <div class="score-bar-wrap"><div class="score-bar-fill" style="width:75%"></div></div>
+        <span class="score-val" style="color:var(--warn)">15 / 20</span>
+      </div>
+      <div class="score-row">
+        <span class="score-name">Professional Tone</span>
+        <div class="score-bar-wrap"><div class="score-bar-fill" style="width:90%"></div></div>
+        <span class="score-val" style="color:var(--good)">18 / 20</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-section">
+    <h2>Keep Practicing!</h2>
+    <p>The more scenarios you complete, the stronger your ticket writing becomes. Head back to practice more scenarios or review the guide to reinforce your skills.</p>
+    <div class="btn-row">
+      <a class="btn-primary" href="helpdesk-practice.html">Practice Again →</a>
+      <a class="btn-secondary" href="ticket-guide.html">Review the Guide</a>
+      <a class="btn-secondary" href="index.html">Back to Home</a>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
