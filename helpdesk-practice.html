@@ -262,6 +262,22 @@
     <div class="final-score" id="final-score-display"></div>
     <p id="final-message"></p>
     <div style="height:24px"></div>
+    <div id="badge-section" style="display:none;background:linear-gradient(135deg,#0a2240,#1a3a6b);border:2px solid #e8c96a;border-radius:16px;padding:32px 24px;margin-bottom:24px;text-align:center;">
+      <svg width="140" height="162" viewBox="0 0 140 162" style="display:block;margin:0 auto 16px;">
+        <polygon points="70,4 116,4 140,46 116,88 70,88 46,46" fill="#0a2240" stroke="#e8c96a" stroke-width="3"/>
+        <polygon points="70,14 116,14 134,46 116,78 70,78 52,46" fill="none" stroke="#e8c96a" stroke-width="1.2"/>
+        <text x="70" y="42" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="700" fill="#e8c96a">★</text>
+        <text x="70" y="58" text-anchor="middle" font-family="sans-serif" font-size="7.5" font-weight="700" fill="#e8c96a" letter-spacing="1.5">TOP SCORER</text>
+        <text x="70" y="71" text-anchor="middle" font-family="sans-serif" font-size="6.5" fill="#aac4e8">TicketFLO Training</text>
+        <text x="70" y="108" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700" fill="#e8c96a">Top Scorer</text>
+        <text x="70" y="124" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#aac4e8">3+ scenarios at 90% or higher</text>
+        <line x1="30" y1="138" x2="110" y2="138" stroke="#e8c96a" stroke-width="0.8" opacity="0.5"/>
+        <text x="70" y="152" text-anchor="middle" font-family="sans-serif" font-size="8" fill="#aac4e8" id="badge-name-svg">TicketFLO Training</text>
+      </svg>
+      <div style="font-size:1.2rem;font-weight:700;color:#e8c96a;margin-bottom:6px;">Top Scorer Badge Earned!</div>
+      <div style="font-size:0.88rem;color:#aac4e8;margin-bottom:20px;">You scored 90%+ on 3 or more scenarios. You truly get it!</div>
+      <button onclick="downloadBadge()" style="background:#e8c96a;color:#0a2240;border:none;border-radius:8px;padding:11px 24px;font-size:0.95rem;font-weight:700;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;margin-right:8px;">⬇ Download Badge</button>
+    </div>
     <div id="cert-section" style="display:none;background:#fff;border:1.5px solid #dde1e7;border-radius:12px;padding:24px;margin-bottom:24px;text-align:center;">
       <div style="font-size:2rem;margin-bottom:8px;">🏆</div>
       <div style="font-size:1.1rem;font-weight:700;margin-bottom:6px;">You earned a certificate!</div>
@@ -433,6 +449,40 @@ function downloadCertificate() {
   w.document.close();
 }
 
+function downloadBadge() {
+  const name = localStorage.getItem('tft_student_name') || 'Student';
+  const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const w = window.open('', '_blank', 'width=500,height=560');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap');
+    body { margin:0; background:#f4f6f9; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:'IBM Plex Sans',sans-serif; }
+    .badge-wrap { background:linear-gradient(135deg,#0a2240,#1a3a6b); border:3px solid #e8c96a; border-radius:20px; padding:40px 48px; text-align:center; width:340px; }
+    svg { display:block; margin:0 auto 20px; }
+    .badge-name { color:#e8c96a; font-size:1.3rem; font-weight:700; margin-bottom:6px; }
+    .badge-sub { color:#aac4e8; font-size:0.85rem; margin-bottom:4px; }
+    .badge-date { color:#718096; font-size:0.78rem; margin-top:16px; border-top:1px solid rgba(232,201,106,0.3); padding-top:12px; }
+    .print-btn { margin-top:24px; background:#e8c96a; color:#0a2240; border:none; padding:12px 28px; border-radius:8px; font-size:1rem; font-weight:700; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; }
+    @media print { .print-btn { display:none; } body { background:#fff; } }
+  </style></head><body>
+  <div class="badge-wrap">
+    <svg width="160" height="100" viewBox="0 0 160 100">
+      <polygon points="80,4 128,4 152,50 128,96 80,96 56,50" fill="#0a2240" stroke="#e8c96a" stroke-width="3"/>
+      <polygon points="80,14 128,14 146,50 128,86 80,86 62,50" fill="none" stroke="#e8c96a" stroke-width="1.5"/>
+      <text x="80" y="46" text-anchor="middle" font-family="sans-serif" font-size="28" font-weight="700" fill="#e8c96a">★</text>
+      <text x="80" y="64" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="700" fill="#e8c96a" letter-spacing="2">TOP SCORER</text>
+      <text x="80" y="78" text-anchor="middle" font-family="sans-serif" font-size="8" fill="#aac4e8">TicketFLO Training</text>
+    </svg>
+    <div class="badge-name">Top Scorer</div>
+    <div class="badge-sub">${name}</div>
+    <div class="badge-sub">Scored 90%+ on 3 or more scenarios</div>
+    <div class="badge-sub">IT Help Desk Ticket Writing Program</div>
+    <div class="badge-date">Issued ${date} · TicketFLO Training</div>
+  </div>
+  <button class="print-btn" onclick="window.print()">🖨 Print / Save as PDF</button>
+  </body></html>`);
+  w.document.close();
+}
 // ── PROGRESS TRACKER ──────────────────────────────────────────
 function saveScenarioProgress(scenarioIndex, scorePercent) {
   const history = JSON.parse(localStorage.getItem('tft_history') || '[]');
@@ -460,6 +510,12 @@ function showComplete(){
   localStorage.setItem('tft_runs', JSON.stringify(runs));
   if (pct >= 80) {
     document.getElementById('cert-section').style.display = 'block';
+  }
+  // Check for Top Scorer badge: 3+ scenarios at 90%+
+  const history = JSON.parse(localStorage.getItem('tft_history') || '[]');
+  const topScores = history.filter(h => h.score >= 90);
+  if (topScores.length >= 3) {
+    document.getElementById('badge-section').style.display = 'block';
   }
 }
 
