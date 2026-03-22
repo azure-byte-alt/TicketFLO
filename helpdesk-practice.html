@@ -187,6 +187,15 @@
       <div class="ticket-type-badge" id="ticket-type-badge">Handle Call</div>
       <div class="scenario-text" id="scenario-text"></div>
       <div class="caller-info" id="caller-info"></div>
+      <div style="margin-top:16px;">
+        <button id="play-btn" onclick="playScenarioAudio()" style="display:inline-flex;align-items:center;gap:8px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:0.88rem;font-weight:600;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;transition:all 0.15s;">
+          <span style="font-size:1rem;">▶</span> Play Call Audio
+        </button>
+        <button id="stop-btn" onclick="stopScenarioAudio()" style="display:none;align-items:center;gap:8px;background:#e17055;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:0.88rem;font-weight:600;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;margin-left:8px;">
+          <span>■</span> Stop
+        </button>
+        <span id="audio-status" style="font-size:0.8rem;color:#718096;margin-left:12px;"></span>
+      </div>
     </div>
     <div class="tip-box" id="tip-box"></div>
     <form id="ticket-form" onsubmit="return false;">
@@ -376,6 +385,8 @@ function checkCode(){
 }
 
 function loadScenario(){
+  stopScenarioAudio();
+  document.getElementById('audio-status').textContent = '';
   const s=scenarios[currentScenario];
   document.getElementById('scenario-num').textContent=currentScenario+1;
   document.getElementById('scenario-total').textContent=scenarios.length;
@@ -389,6 +400,54 @@ function loadScenario(){
   document.getElementById('progress-bar').style.width=((currentScenario)/scenarios.length*100)+'%';
   document.getElementById('feedback-panel').classList.remove('show');
   document.getElementById('btn-next').style.display='none';
+}
+
+// ── AUDIO / TEXT-TO-SPEECH ────────────────────────────────────
+let currentUtterance = null;
+
+function playScenarioAudio() {
+  if (!window.speechSynthesis) {
+    document.getElementById('audio-status').textContent = 'Audio not supported in this browser.';
+    return;
+  }
+  stopScenarioAudio();
+  const s = scenarios[currentScenario];
+  const callerName = s.caller.name;
+  const intro = `Incoming call from ${callerName}. `;
+  const fullText = intro + s.text;
+  currentUtterance = new SpeechSynthesisUtterance(fullText);
+  currentUtterance.rate = 0.92;
+  currentUtterance.pitch = 1.0;
+  currentUtterance.volume = 1.0;
+  // Try to pick a natural voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => /natural|samantha|karen|daniel|en-US|en-GB/i.test(v.name + v.lang));
+  if (preferred) currentUtterance.voice = preferred;
+  currentUtterance.onstart = () => {
+    document.getElementById('play-btn').style.display = 'none';
+    document.getElementById('stop-btn').style.display = 'inline-flex';
+    document.getElementById('audio-status').textContent = '🔊 Playing...';
+  };
+  currentUtterance.onend = () => {
+    document.getElementById('play-btn').style.display = 'inline-flex';
+    document.getElementById('stop-btn').style.display = 'none';
+    document.getElementById('audio-status').textContent = '✓ Done — now write your ticket!';
+  };
+  currentUtterance.onerror = () => {
+    document.getElementById('play-btn').style.display = 'inline-flex';
+    document.getElementById('stop-btn').style.display = 'none';
+    document.getElementById('audio-status').textContent = '';
+  };
+  window.speechSynthesis.speak(currentUtterance);
+}
+
+function stopScenarioAudio() {
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+  document.getElementById('play-btn').style.display = 'inline-flex';
+  document.getElementById('stop-btn').style.display = 'none';
+  document.getElementById('audio-status').textContent = '';
 }
 
 // ── STUDENT NAME ──────────────────────────────────────────────
