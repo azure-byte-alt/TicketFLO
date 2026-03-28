@@ -382,7 +382,7 @@ async function submitTicket(){
   document.getElementById('ai-thinking').style.display='flex';
   document.getElementById('ai-output').innerHTML='';
   try{
-    const resp=await fetch('/api/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket:f,scenario:{type:s.type,text:s.text,caller:s.caller}})});
+    const resp=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket:f,scenario:{type:s.type,text:s.text,caller:s.caller}})});
     const result=await resp.json();
     document.getElementById('ai-thinking').style.display='none';
     let html='<div class="ai-sections">';
