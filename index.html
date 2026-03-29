@@ -315,7 +315,69 @@
       text-align: center;
       font-size: 0.82rem;
       color: var(--muted);
-    }
+   /* === AUDIENCE SECTION === */
+.audience-section {
+  display: flex;
+  gap: 24px;
+  margin: 40px 0;
+  align-items: stretch;
+}
+
+
+}
+.audience-box {
+  flex: 1;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 24px;
+  border-radius: 16px;
+  text-align: left;
+}
+
+/* 👇 PASTE HERE */
+.audience-box.entry {
+  border: 2px solid #22c55e;
+}
+
+.audience-box.active {
+  border: 2px solid #3b82f6;
+}
+.audience-box h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.audience-box p {
+  margin-bottom: 16px;
+  color: #cbd5e1;
+}
+
+.audience-box ul {
+  padding-left: 20px;
+  margin: 0;
+  list-style: disc;
+}
+
+.audience-box li {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.audience-box.entry {
+  border: 2px solid #22c55e;
+}
+
+.audience-box.active {
+  border: 2px solid #3b82f6;
+}
+
+@media (max-width: 900px) {
+  .audience-section {
+    flex-direction: column;
+  }
+} }
   </style>
 </head>
 <body>
