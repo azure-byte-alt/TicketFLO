@@ -776,12 +776,33 @@ function showIncomingCall(scenario) {
   ringInterval = setInterval(playRingTone, 3200);
 }
 
-function answerCall() {
-  clearInterval(ringInterval);
-  document.getElementById('call-overlay').style.display = 'none';
-  const s = scenarios[currentScenario];
-  setTimeout(() => speakScenario(s.text, s.caller.name), 600);
-}
+async function answerCall() {
+    clearInterval(ringInterval);
+    document.getElementById('call-overlay').style.display = 'none';
+    const s = scenarios[currentScenario];
+    const female = isFemale(s.caller.name);
+    let spokenText = s.text
+      .replace(/^A user calls in [^.]*\. /i, '')
+      .replace(/^A user calls and [^.]*\. /i, '')
+      .replace(/^A user [^.]*\. /i, '')
+      .replace(/She says /gi, '').replace(/He says /gi, '')
+      .replace(/She /gi, 'I ').replace(/He /gi, 'I ')
+      .replace(/Her /gi, 'My ').replace(/His /gi, 'My ')
+      .replace(/the user/gi, 'I').replace(/User /gi, 'I ')
+      .trim();
+    try {
+      const resp = await fetch('/api/speak', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ text: spokenText, gender: female ? 'female' : 'male' })
+      });
+      const blob = await resp.blob();
+      const audio = new Audio(URL.createObjectURL(blob));
+      audio.play();
+    } catch(e) {
+      speakScenario(s.text, s.caller.name);
+    }
+  }
 
 function declineCall() {
   clearInterval(ringInterval);
