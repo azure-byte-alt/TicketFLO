@@ -796,9 +796,16 @@ async function answerCall() {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ text: spokenText, gender: female ? 'female' : 'male' })
       });
-      const blob = await resp.blob();
-      const audio = new Audio(URL.createObjectURL(blob));
-      audio.play();
+    const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.volume = 1.0;
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          document.addEventListener('click', () => audio.play(), { once: true });
+        });
+      }
     } catch(e) {
       speakScenario(s.text, s.caller.name);
     }
