@@ -1,12 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function SignupPage() {
-  const router = useRouter()
   const supabase = createClient()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -46,8 +44,7 @@ export default function SignupPage() {
       setError(error.message)
       setLoading(false)
     } else {
-      router.push('/dashboard')
-      router.refresh()
+      window.location.href = '/dashboard'
     }
   }
 
