@@ -1,32 +1,45 @@
 'use client'
 
-import { useFormState, useFormStatus } from 'react-dom'
+import { useState } from 'react'
 import Link from 'next/link'
-import { signIn } from './actions'
-
-function SubmitButton() {
-  const { pending } = useFormStatus()
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full bg-[#1a2744] text-white py-2.5 px-4 rounded-lg font-medium hover:bg-[#243459] focus:outline-none focus:ring-2 focus:ring-[#4db8a4] focus:ring-offset-2 transition disabled:opacity-60 disabled:cursor-not-allowed"
-    >
-      {pending ? 'Signing in...' : 'Sign In'}
-    </button>
-  )
-}
+import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
-  const [state, formAction] = useFormState(signIn, { error: '' })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    const form = e.currentTarget
+    const email = (form.elements.namedItem('email') as HTMLInputElement).value
+    const password = (form.elements.namedItem('password') as HTMLInputElement).value
+
+    try {
+      const supabase = createClient()
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+
+      if (authError) {
+        setError(authError.message)
+        setLoading(false)
+        return
+      }
+
+      window.location.href = '/dashboard'
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.')
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#f0f4f8] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-2">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
               <rect width="32" height="32" rx="8" fill="#1a2744"/>
               <path d="M8 10C8 9.44772 8.44772 9 9 9H23C23.5523 9 24 9.44772 24 10V22C24 22.5523 23.5523 23 23 23H9C8.44772 23 8 22.5523 8 22V10Z" stroke="#4db8a4" strokeWidth="1.5"/>
               <path d="M12 13H20M12 16H18M12 19H16" stroke="#4db8a4" strokeWidth="1.5" strokeLinecap="round"/>
@@ -40,13 +53,13 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-[#1a2744] mb-2">Welcome back</h1>
           <p className="text-gray-500 mb-6">Sign in to continue your training</p>
 
-          {state?.error && (
+          {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
-              {state.error}
+              {error}
             </div>
           )}
 
-          <form action={formAction} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email address
@@ -56,6 +69,7 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 required
+                autoComplete="email"
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4db8a4] focus:border-transparent transition"
                 placeholder="you@company.com"
               />
@@ -70,12 +84,19 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 required
+                autoComplete="current-password"
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4db8a4] focus:border-transparent transition"
                 placeholder="••••••••"
               />
             </div>
 
-            <SubmitButton />
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#1a2744] text-white py-2.5 px-4 rounded-lg font-medium hover:bg-[#243459] focus:outline-none focus:ring-2 focus:ring-[#4db8a4] focus:ring-offset-2 transition disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-600">
