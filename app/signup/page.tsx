@@ -2,50 +2,37 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { signUp } from './actions'
 
 export default function SignupPage() {
-  const supabase = createClient()
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setLoading(true)
     setError(null)
 
-    if (password !== confirmPassword) {
+    const formData = new FormData(e.currentTarget)
+    const password = formData.get('password') as string
+    const confirm = formData.get('confirm_password') as string
+
+    if (password !== confirm) {
       setError('Passwords do not match')
-      setLoading(false)
       return
     }
-
     if (password.length < 6) {
       setError('Password must be at least 6 characters')
-      setLoading(false)
       return
     }
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
-    })
+    setLoading(true)
+    const result = await signUp(formData)
 
-    if (error) {
-      setError(error.message)
+    if (result?.error) {
+      setError(result.error)
       setLoading(false)
-    } else {
-      window.location.href = '/dashboard'
     }
+    // On success, the server action calls redirect('/dashboard') — no client code needed
   }
 
   return (
@@ -74,16 +61,15 @@ export default function SignupPage() {
             </div>
           )}
 
-          <form onSubmit={handleSignup} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">
                 Full Name
               </label>
               <input
-                id="fullName"
+                id="full_name"
+                name="full_name"
                 type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4db8a4] focus:border-transparent transition"
                 placeholder="John Smith"
@@ -96,9 +82,8 @@ export default function SignupPage() {
               </label>
               <input
                 id="email"
+                name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4db8a4] focus:border-transparent transition"
                 placeholder="you@company.com"
@@ -111,9 +96,8 @@ export default function SignupPage() {
               </label>
               <input
                 id="password"
+                name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4db8a4] focus:border-transparent transition"
                 placeholder="Min. 6 characters"
@@ -121,14 +105,13 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700 mb-1">
                 Confirm Password
               </label>
               <input
-                id="confirmPassword"
+                id="confirm_password"
+                name="confirm_password"
                 type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4db8a4] focus:border-transparent transition"
                 placeholder="••••••••"
