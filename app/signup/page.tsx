@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 
 export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [confirmEmail, setConfirmEmail] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -29,25 +29,44 @@ export default function SignupPage() {
 
     setLoading(true)
 
-    try {
-      const supabase = createClient()
-      const { error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: fullName } },
-      })
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, fullName }),
+    })
 
-      if (authError) {
-        setError(authError.message)
-        setLoading(false)
-        return
-      }
+    const data = await res.json()
 
-      window.location.href = '/dashboard'
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.')
+    if (!res.ok) {
+      setError(data.error || 'Sign up failed')
       setLoading(false)
+      return
     }
+
+    if (data.confirmEmail) {
+      setConfirmEmail(true)
+      setLoading(false)
+      return
+    }
+
+    window.location.href = '/dashboard'
+  }
+
+  if (confirmEmail) {
+    return (
+      <div className="min-h-screen bg-[#f0f4f8] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center">
+          <div className="text-4xl mb-4">📧</div>
+          <h1 className="text-2xl font-bold text-[#1a2744] mb-2">Check your email</h1>
+          <p className="text-gray-500 mb-4">
+            We sent a confirmation link to your email address. Click it to activate your account.
+          </p>
+          <Link href="/login" className="text-[#4db8a4] font-medium hover:underline">
+            Back to Sign In
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (

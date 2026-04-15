@@ -1,11 +1,13 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getToken, decodeToken } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { ScoreBadge } from '@/components/ScoreCard'
 
 export default async function FeedbackPage() {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const token = getToken()
+  if (!token) return null
+  const userInfo = decodeToken(token)
+  if (!userInfo) return null
 
   const { data: feedbackList } = await supabase
     .from('feedback')
@@ -24,7 +26,7 @@ export default async function FeedbackPage() {
         )
       )
     `)
-    .eq('user_id', user.id)
+    .eq('user_id', userInfo.id)
     .order('created_at', { ascending: false })
 
   const difficultyBadge: Record<string, string> = {

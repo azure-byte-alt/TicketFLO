@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 
 const navItems = [
   {
@@ -70,12 +69,10 @@ interface SidebarProps {
 export default function Sidebar({ userName, userEmail }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const supabase = createClient()
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
+    await fetch('/api/auth/logout', { method: 'POST' })
+    window.location.href = '/login'
   }
 
   const initials = userName

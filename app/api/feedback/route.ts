@@ -1,31 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient, getToken } from '@/lib/supabase/server'
 import { evaluateTicket } from '@/lib/anthropic'
 
 export async function POST(request: NextRequest) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll() },
-        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {}
-        },
-      },
-    }
-  )
+  const token = getToken()
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser(token)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let body: {
     scenarioId?: string
@@ -52,7 +35,6 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Save the ticket
   const { data: ticket, error: ticketError } = await supabase
     .from('tickets')
     .insert({
@@ -72,7 +54,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to save ticket' }, { status: 500 })
   }
 
-  // Evaluate with Claude
   let evaluation
   try {
     evaluation = await evaluateTicket({
@@ -85,12 +66,10 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     console.error('Claude evaluation error:', err)
-    // Clean up the ticket if AI fails
     await supabase.from('tickets').delete().eq('id', ticket.id)
     return NextResponse.json({ error: 'AI evaluation failed. Please try again.' }, { status: 500 })
   }
 
-  // Save feedback
   const { data: feedback, error: feedbackError } = await supabase
     .from('feedback')
     .insert({

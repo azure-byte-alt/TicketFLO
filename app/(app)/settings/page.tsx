@@ -1,13 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 
 export default function SettingsPage() {
-  const supabase = createClient()
-  const router = useRouter()
-
   const [user, setUser] = useState<{ id: string; email: string } | null>(null)
   const [fullName, setFullName] = useState('')
   const [savingProfile, setSavingProfile] = useState(false)
@@ -23,28 +18,32 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
-    const load = async () => {
-      const { data: { user: u } } = await supabase.auth.getUser()
-      if (!u) { router.push('/login'); return }
-      setUser({ id: u.id, email: u.email ?? '' })
-      const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', u.id).single()
-      if (profile?.full_name) setFullName(profile.full_name)
-    }
-    load()
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.id) {
+          setUser({ id: data.id, email: data.email })
+          if (data.fullName) setFullName(data.fullName)
+        } else {
+          window.location.href = '/login'
+        }
+      })
+      .catch(() => { window.location.href = '/login' })
   }, [])
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) return
     setSavingProfile(true)
     setProfileMsg(null)
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({ id: user.id, full_name: fullName.trim() })
-    if (error) {
-      setProfileMsg({ type: 'error', text: 'Failed to update profile. Please try again.' })
-    } else {
+    const res = await fetch('/api/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fullName }),
+    })
+    if (res.ok) {
       setProfileMsg({ type: 'success', text: 'Profile updated successfully.' })
+    } else {
+      setProfileMsg({ type: 'error', text: 'Failed to update profile. Please try again.' })
     }
     setSavingProfile(false)
   }
@@ -61,13 +60,18 @@ export default function SettingsPage() {
     }
     setSavingPassword(true)
     setPasswordMsg(null)
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-    if (error) {
-      setPasswordMsg({ type: 'error', text: error.message })
-    } else {
+    const res = await fetch('/api/auth/password', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: newPassword }),
+    })
+    const data = await res.json()
+    if (res.ok) {
       setPasswordMsg({ type: 'success', text: 'Password updated successfully.' })
       setNewPassword('')
       setConfirmPassword('')
+    } else {
+      setPasswordMsg({ type: 'error', text: data.error || 'Failed to update password.' })
     }
     setSavingPassword(false)
   }
@@ -75,8 +79,8 @@ export default function SettingsPage() {
   const handleDeleteAccount = async () => {
     if (deleteInput !== 'DELETE') return
     setDeleting(true)
-    await supabase.auth.signOut()
-    router.push('/login')
+    await fetch('/api/auth/logout', { method: 'POST' })
+    window.location.href = '/login'
   }
 
   const initials = fullName
@@ -191,7 +195,7 @@ export default function SettingsPage() {
         </form>
       </div>
 
-      {/* Preferences (UI only) */}
+      {/* Preferences */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
         <h2 className="font-semibold text-[#1a2744] mb-5">Preferences</h2>
         <div className="space-y-4">
@@ -247,7 +251,7 @@ export default function SettingsPage() {
                 disabled={deleteInput !== 'DELETE' || deleting}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition"
               >
-                {deleting ? 'Deleting...' : 'Confirm Delete'}
+                {deleting ? 'Signing out...' : 'Confirm Delete'}
               </button>
               <button
                 onClick={() => { setShowDeleteConfirm(false); setDeleteInput('') }}

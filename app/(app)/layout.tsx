@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getToken } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 
@@ -7,12 +7,12 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const token = getToken()
+  if (!token) redirect('/login')
 
-  if (!user) {
-    redirect('/login')
-  }
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser(token)
+  if (!user) redirect('/login')
 
   const { data: profile } = await supabase
     .from('profiles')

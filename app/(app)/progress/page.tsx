@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getToken, decodeToken } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { ScoreBadge } from '@/components/ScoreCard'
 
@@ -14,8 +14,10 @@ const ACHIEVEMENTS = [
 
 export default async function ProgressPage() {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const token = getToken()
+  if (!token) return null
+  const userInfo = decodeToken(token)
+  if (!userInfo) return null
 
   const { data: allFeedback } = await supabase
     .from('feedback')
@@ -34,7 +36,7 @@ export default async function ProgressPage() {
         )
       )
     `)
-    .eq('user_id', user.id)
+    .eq('user_id', userInfo.id)
     .order('created_at', { ascending: true })
 
   const total = allFeedback?.length ?? 0

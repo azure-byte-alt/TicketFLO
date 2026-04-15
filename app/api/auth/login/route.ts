@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
   const { email, password } = await request.json()
@@ -9,29 +8,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
   }
 
-  const cookieStore = cookies()
-  const supabase = createServerClient(
+  const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          )
-        },
-      },
-    }
+    { auth: { persistSession: false } }
   )
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 401 })
+  if (error || !data.session) {
+    return NextResponse.json({ error: error?.message ?? 'Sign in failed' }, { status: 401 })
   }
 
-  return NextResponse.json({ ok: true })
+  const response = NextResponse.json({ ok: true })
+  response.cookies.set('sb-access-token', data.session.access_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 8,
+  })
+  return response
 }

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getToken, decodeToken } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import PracticeForm from './PracticeForm'
 
@@ -17,8 +17,10 @@ export default async function PracticeSessionPage({
 
   if (!scenario) notFound()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) notFound()
+  const token = getToken()
+  if (!token) notFound()
+  const userInfo = decodeToken(token)
+  if (!userInfo) notFound()
 
-  return <PracticeForm scenario={scenario} userId={user.id} />
+  return <PracticeForm scenario={scenario} userId={userInfo.id} />
 }

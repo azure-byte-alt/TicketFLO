@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getToken, decodeToken } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ScoreCard, { getScoreColor } from '@/components/ScoreCard'
@@ -28,8 +28,10 @@ export default async function FeedbackDetailPage({
   params: { id: string }
 }) {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) notFound()
+  const token = getToken()
+  if (!token) notFound()
+  const userInfo = decodeToken(token)
+  if (!userInfo) notFound()
 
   const { data: feedback } = await supabase
     .from('feedback')
@@ -52,7 +54,7 @@ export default async function FeedbackDetailPage({
       )
     `)
     .eq('id', params.id)
-    .eq('user_id', user.id)
+    .eq('user_id', userInfo.id)
     .single()
 
   if (!feedback) notFound()

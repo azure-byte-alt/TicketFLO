@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getToken, decodeToken } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { ScoreBadge } from '@/components/ScoreCard'
 
@@ -19,22 +19,23 @@ function getTipOfTheDay() {
 }
 
 export default async function DashboardPage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const token = getToken()
+  if (!token) return null
+  const userInfo = decodeToken(token)
+  if (!userInfo) return null
 
-  if (!user) return null
+  const supabase = createClient()
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('full_name')
-    .eq('id', user.id)
+    .eq('id', userInfo.id)
     .single()
 
-  // Fetch stats
   const { data: allFeedback } = await supabase
     .from('feedback')
     .select('total_score, created_at')
-    .eq('user_id', user.id)
+    .eq('user_id', userInfo.id)
     .order('created_at', { ascending: true })
 
   const totalTickets = allFeedback?.length ?? 0
@@ -45,7 +46,6 @@ export default async function DashboardPage() {
     ? Math.max(...allFeedback!.map((f) => f.total_score))
     : 0
 
-  // Calculate streak
   let streak = 0
   if (allFeedback && allFeedback.length > 0) {
     const today = new Date()
@@ -66,7 +66,6 @@ export default async function DashboardPage() {
     }
   }
 
-  // Recent submissions (last 5)
   const { data: recentFeedback } = await supabase
     .from('feedback')
     .select(`
@@ -81,11 +80,11 @@ export default async function DashboardPage() {
         )
       )
     `)
-    .eq('user_id', user.id)
+    .eq('user_id', userInfo.id)
     .order('created_at', { ascending: false })
     .limit(5)
 
-  const displayName = profile?.full_name || user.email?.split('@')[0] || 'there'
+  const displayName = profile?.full_name || userInfo.email?.split('@')[0] || 'there'
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   const tip = getTipOfTheDay()
 
@@ -98,7 +97,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-8">
-      {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-[#1a2744]">Welcome back, {displayName}!</h1>
@@ -120,7 +118,6 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
           <div key={stat.label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
@@ -134,7 +131,6 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Submissions */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="px-6 py-4 border-b border-gray-100">
             <h2 className="font-semibold text-[#1a2744]">Recent Submissions</h2>
@@ -185,7 +181,6 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Tip of the Day */}
         <div className="space-y-4">
           <div className="bg-[#1a2744] rounded-xl p-6 text-white">
             <div className="flex items-center gap-2 mb-3">
