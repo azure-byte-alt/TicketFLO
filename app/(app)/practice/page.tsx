@@ -22,7 +22,7 @@ export default async function PracticePage() {
   const { data: scenarios } = await supabase
     .from('scenarios')
     .select('*')
-    .order('difficulty', { ascending: true })
+    .order('scenario_number', { ascending: true })
 
   return (
     <div className="p-8">
