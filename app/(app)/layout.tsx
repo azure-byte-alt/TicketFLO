@@ -1,4 +1,4 @@
-import { createClient, getToken, decodeToken } from '@/lib/supabase/server'
+import { getToken, decodeToken } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 
@@ -13,17 +13,10 @@ export default async function AppLayout({
   const decoded = decodeToken(token)
   if (!decoded) redirect('/login')
 
-  const supabase = createClient()
-
-  const { data: profile } = await supabase
-    .from('users')
-    .select('first_name, last_name')
-    .eq('id', decoded.id)
-    .single()
-
-  const fullName = profile?.first_name
-    ? `${profile.first_name} ${profile.last_name || ''}`.trim()
-    : null
+  const nameParts = (decoded.fullName || '').trim().split(' ')
+  const firstName = nameParts[0] || null
+  const lastName = nameParts.slice(1).join(' ') || null
+  const fullName = firstName ? `${firstName} ${lastName || ''}`.trim() : null
 
   return (
     <div className="flex h-screen bg-[#f0f4f8] overflow-hidden">
