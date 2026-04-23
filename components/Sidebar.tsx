@@ -1,7 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 const navItems = [
   {
@@ -66,28 +73,55 @@ interface SidebarProps {
   userEmail: string | null
 }
 
-export default function Sidebar({ userName, userEmail }: SidebarProps) {
+export default function Sidebar({ userName: initialName, userEmail }: SidebarProps) {
   const pathname = usePathname()
-  const router = useRouter()
+  const [displayName, setDisplayName] = useState(initialName || userEmail || 'User')
+
+  useEffect(() => {
+    async function fetchName() {
+      try {
+        const token = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('sb-access-token='))
+          ?.split('=')[1]
+
+        if (!token) return
+
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        const userId = payload.sub
+        if (!userId) return
+
+        const { data } = await supabase
+          .from('users')
+          .select('first_name, last_name')
+          .eq('id', userId)
+          .single()
+
+        if (data?.first_name) {
+          setDisplayName(`${data.first_name} ${data.last_name || ''}`.trim())
+        }
+      } catch (e) {
+        // silently fail, keep showing email
+      }
+    }
+    fetchName()
+  }, [])
 
   const handleSignOut = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
     window.location.href = '/login'
   }
 
-  const initials = userName
-    ? userName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+  const initials = displayName
+    ? displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : userEmail?.slice(0, 2).toUpperCase() || 'U'
-
-  const displayName = userName || userEmail || 'User'
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-[#1a2744] flex flex-col z-50">
-      {/* Logo */}
       <div className="px-6 py-6 border-b border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-[#4db8a4]/20 rounded-lg flex items-center justify-center flex-shrink-0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="#4db8a4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <rect x="9" y="3" width="6" height="4" rx="1" stroke="#4db8a4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M9 12h6M9 16h4" stroke="#4db8a4" strokeWidth="2" strokeLinecap="round"/>
@@ -100,8 +134,7 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           return (
@@ -121,7 +154,6 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
         })}
       </nav>
 
-      {/* User Info */}
       <div className="px-4 py-4 border-t border-white/10">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-9 h-9 bg-[#4db8a4] rounded-full flex items-center justify-center flex-shrink-0">
@@ -129,7 +161,6 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-white text-sm font-medium truncate">{displayName}</div>
-            
           </div>
         </div>
         <button
