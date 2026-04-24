@@ -234,7 +234,7 @@ export default async function ProgressPage() {
                       {ach.desc}
                     </div>
                     {unlocked && (
-                      <div className="mt-2 text-xs text-[#4db8a4] font-semibold">Unlocked âœ“</div>
+                      <div className="mt-2 text-xs text-[#4db8a4] font-semibold">Unlocked ✓</div>
                     )}
                   </div>
                 )
