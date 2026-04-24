@@ -129,7 +129,7 @@ export default async function ProgressPage() {
                 {[
                   { label: 'Title Quality', score: scoreBuckets.title },
                   { label: 'Description Quality', score: scoreBuckets.description },
-                  { label: 'Steps to Reproduce', score: scoreBuckets.steps },
+                  { label: 'Probing & Details', score: scoreBuckets.steps },
                   { label: 'Priority & Category', score: scoreBuckets.priority },
                 ].map(({ label, score }) => {
                   const pct = Math.round((score / 25) * 100)
