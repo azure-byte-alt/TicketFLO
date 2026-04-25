@@ -1,137 +1,39 @@
-import { createClient, getToken, decodeToken } from '@/lib/supabase/server'
-import Link from 'next/link'
-import { ScoreBadge } from '@/components/ScoreCard'
-import { getDifficultyFromTier } from '@/lib/scenarios'
+<div className="grid gap-4">
+ {feedbackList.map((item) => (
+   <div className="bg-white rounded-2xl shadow-md p-5 border border-slate-100 hover:shadow-xl transition">
+      
+      <div className="flex justify-between items-start">
+         <div>
+            <h3 className="font-semibold text-slate-700 text-lg">
+               Ticket Feedback
+            </h3>
+            <p className="text-sm text-slate-400">
+               {new Date(item.created_at).toLocaleDateString()}
+            </p>
+         </div>
 
-export default async function FeedbackPage() {
-  const supabase = createClient()
-  const token = getToken()
-  if (!token) return null
-  const userInfo = decodeToken(token)
-  if (!userInfo) return null
-
-  const { data: feedbackList } = await supabase
-    .from('feedback')
-    .select(`
-      id,
-      score,
-      score_label,
-      created_at,
-      submissions!inner (
-        id,
-        subject_line,
-        category,
-        priority,
-        scenarios (
-          title,
-          tier
-        )
-      )
-    `)
-    .eq('submissions.user_id', userInfo.id)
-    .order('created_at', { ascending: false })
-
-  const difficultyBadge: Record<string, string> = {
-    beginner: 'bg-green-100 text-green-700',
-    intermediate: 'bg-yellow-100 text-yellow-700',
-    advanced: 'bg-red-100 text-red-700',
-  }
-
-  return (
-    <div className="p-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1a2744]">Feedback History</h1>
-          <p className="text-gray-500 mt-1">Review AI feedback on all your submitted tickets</p>
-        </div>
-        <Link
-          href="/practice"
-          className="px-4 py-2 bg-[#4db8a4] text-white rounded-lg text-sm font-medium hover:bg-[#3da898] transition"
-        >
-          New Practice
-        </Link>
+         <div className={`px-4 py-2 rounded-full font-bold text-white ${
+           item.score >= 80 ? "bg-green-500" :
+           item.score >= 60 ? "bg-yellow-500" :
+           "bg-red-500"
+         }`}>
+            {item.score}%
+         </div>
       </div>
 
-      {!feedbackList || feedbackList.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-16 text-center">
-          <div className="text-5xl mb-4">ðŸ’¬</div>
-          <h3 className="font-semibold text-[#1a2744] mb-2">No feedback yet</h3>
-          <p className="text-gray-500 text-sm mb-4">
-            Complete a practice scenario to receive AI-powered feedback on your ticket writing.
-          </p>
-          <Link
-            href="/practice"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#4db8a4] text-white rounded-lg text-sm font-medium hover:bg-[#3da898] transition"
-          >
-            Start Practicing
-          </Link>
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-6 py-3 font-semibold text-gray-600">Scenario / Ticket</th>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600 hidden md:table-cell">Category</th>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600 hidden lg:table-cell">Difficulty</th>
-                <th className="text-center px-6 py-3 font-semibold text-gray-600">Score</th>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600 hidden sm:table-cell">Date</th>
-                <th className="px-6 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {feedbackList.map((item) => {
-                const submission = Array.isArray(item.submissions) ? item.submissions[0] : item.submissions
-                const scenario = submission && (Array.isArray((submission as any).scenarios) ? (submission as any).scenarios[0] : (submission as any).scenarios)
-                const difficulty = getDifficultyFromTier(scenario?.tier)
+      <div className="mt-4">
+         <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              className={`h-full ${
+                item.score >= 80 ? "bg-green-500" :
+                item.score >= 60 ? "bg-yellow-500" :
+                "bg-red-500"
+              }`}
+              style={{ width: `${item.score}%` }}
+            />
+         </div>
+      </div>
 
-                return (
-                  <tr key={item.id} className="hover:bg-gray-50 transition">
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-[#1a2744] truncate max-w-xs">
-                        {scenario?.title || submission?.subject_line || 'Untitled Ticket'}
-                      </div>
-                      {scenario && submission?.subject_line && (
-                        <div className="text-xs text-gray-400 truncate max-w-xs mt-0.5">{submission.subject_line}</div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 hidden md:table-cell">
-                      <span className="text-gray-600">{submission?.category ?? '-'}</span>
-                    </td>
-                    <td className="px-6 py-4 hidden lg:table-cell">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${
-                          difficultyBadge[difficulty] ?? 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        {difficulty}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <ScoreBadge score={item.score} />
-                    </td>
-                    <td className="px-6 py-4 text-gray-400 text-xs hidden sm:table-cell whitespace-nowrap">
-                      {new Date(item.created_at).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Link
-                        href={`/feedback/${item.id}`}
-                        className="text-xs text-[#4db8a4] font-medium hover:underline whitespace-nowrap"
-                      >
-                        View Details →
-                      </Link>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  )
-}
+   </div>
+ ))}
+</div>
