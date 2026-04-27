@@ -15,24 +15,25 @@ export default async function FeedbackPage() {
 
   const supabase = createClient()
 
-  const { data: feedbackList } = await supabase
-    .from('feedback')
-    .select(`
-      id,
-      score,
-      score_label,
-      strength,
-      improvement,
-      critical_miss,
-      coach_note,
-      created_at,
-      submissions!inner (
-        user_id,
-        title
-      )
-    `)
-    .eq('submissions.user_id', userInfo.id)
-    .order('created_at', { ascending: false })
+  // Step 1 — get this user's submissions (RLS filters automatically)
+  const { data: submissions } = await supabase
+    .from('submissions')
+    .select('id, subject_line')
+    .eq('user_id', userInfo.id)
+
+  const submissionIds = submissions?.map((s) => s.id) ?? []
+  const titleMap = Object.fromEntries(
+    (submissions ?? []).map((s) => [s.id, s.subject_line])
+  )
+
+  // Step 2 — get feedback for those submissions
+  const { data: feedbackList } = submissionIds.length > 0
+    ? await supabase
+        .from('feedback')
+        .select('id, score, score_label, strength, improvement, critical_miss, coach_note, created_at, submission_id')
+        .in('submission_id', submissionIds)
+        .order('created_at', { ascending: false })
+    : { data: [] }
 
   return (
     <div className="p-7 max-w-3xl mx-auto">
@@ -70,13 +71,11 @@ export default async function FeedbackPage() {
           const date = new Date(item.created_at).toLocaleDateString('en-US', {
             month: 'long', day: 'numeric', year: 'numeric'
           })
-          const title = (item.submissions as any)?.title ?? 'Practice Ticket'
+          const title = titleMap[item.submission_id] ?? 'Practice Ticket'
 
           return (
-            <div
-              key={item.id}
-              className="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow duration-200"
-            >
+            <div key={item.id} className="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow duration-200">
+
               {/* Card header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
                 <div>
@@ -90,10 +89,7 @@ export default async function FeedbackPage() {
                   >
                     {item.score_label}
                   </span>
-                  <span
-                    className="text-[22px] font-bold tracking-tight"
-                    style={{ color: style.color }}
-                  >
+                  <span className="text-[22px] font-bold tracking-tight" style={{ color: style.color }}>
                     {item.score}
                     <span className="text-[13px] font-normal text-gray-400">/100</span>
                   </span>
@@ -103,23 +99,16 @@ export default async function FeedbackPage() {
               {/* Score bar */}
               <div className="px-5 pt-3 pb-1">
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{ width: `${item.score}%`, background: style.color }}
-                  />
+                  <div className="h-full rounded-full transition-all duration-700" style={{ width: `${item.score}%`, background: style.color }} />
                 </div>
               </div>
 
               {/* Feedback sections */}
               <div className="px-5 py-4 space-y-4">
-
-                {/* Strength */}
                 {item.strength && (
                   <div className="flex gap-3">
                     <div className="w-6 h-6 rounded-md bg-emerald-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 6l3 3 5-5" stroke="#0e7c5b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#0e7c5b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
                     <div>
                       <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-1">Strength</div>
@@ -127,14 +116,10 @@ export default async function FeedbackPage() {
                     </div>
                   </div>
                 )}
-
-                {/* Improvement */}
                 {item.improvement && (
                   <div className="flex gap-3">
                     <div className="w-6 h-6 rounded-md bg-amber-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M6 2v4M6 8v1" stroke="#b45309" strokeWidth="1.5" strokeLinecap="round"/>
-                      </svg>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v4M6 8v1" stroke="#b45309" strokeWidth="1.5" strokeLinecap="round"/></svg>
                     </div>
                     <div>
                       <div className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1">Improve</div>
@@ -142,14 +127,10 @@ export default async function FeedbackPage() {
                     </div>
                   </div>
                 )}
-
-                {/* Critical miss */}
                 {item.critical_miss && (
                   <div className="flex gap-3">
                     <div className="w-6 h-6 rounded-md bg-red-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M3 3l6 6M9 3l-6 6" stroke="#c0392b" strokeWidth="1.5" strokeLinecap="round"/>
-                      </svg>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="#c0392b" strokeWidth="1.5" strokeLinecap="round"/></svg>
                     </div>
                     <div>
                       <div className="text-[10px] font-bold text-red-700 uppercase tracking-wider mb-1">Critical miss</div>
@@ -157,15 +138,12 @@ export default async function FeedbackPage() {
                     </div>
                   </div>
                 )}
-
-                {/* Coach note */}
                 {item.coach_note && (
                   <div className="bg-gray-50 border border-gray-100 rounded-lg px-4 py-3">
                     <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Coach note</div>
                     <p className="text-[13px] text-gray-600 leading-relaxed italic">{item.coach_note}</p>
                   </div>
                 )}
-
               </div>
             </div>
           )
