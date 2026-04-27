@@ -1,4 +1,5 @@
-export default function FeedbackPage() {
+"use client";
+  export default function FeedbackPage() {
   return (
 
 <div className="grid gap-4">
