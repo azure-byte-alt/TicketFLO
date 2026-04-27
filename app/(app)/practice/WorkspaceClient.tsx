@@ -92,7 +92,28 @@ export default function WorkspaceClient({ scenarios }: { scenarios: Scenario[] }
   const hiddenCount = Math.max(0, scenarios.length - VISIBLE_TABS)
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 font-sans">
+    <div className="flex flex-col h-full bg-gray-50 font-sans relative">
+
+      {/* ── AI Loading Overlay ────────────────────────────── */}
+      {isSubmitting && (
+        <div className="absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center gap-5">
+          <div className="w-14 h-14 rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center">
+            <svg className="w-6 h-6 animate-spin text-emerald-600" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+          </div>
+          <div className="text-center">
+            <div className="text-[15px] font-semibold text-gray-900 mb-1">Evaluating with AI Coach...</div>
+            <div className="text-[13px] text-gray-500">Analysing your ticket quality. This takes 5–10 seconds.</div>
+          </div>
+          <div className="flex gap-1.5 mt-2">
+            {['Checking title...', 'Reviewing description...', 'Scoring priority...'].map((step, i) => (
+              <div key={step} className="text-[11px] text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full">{step}</div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Tabs ─────────────────────────────────────────── */}
       <div className="bg-white border-b border-gray-100 flex items-end px-4 overflow-x-auto flex-shrink-0">
