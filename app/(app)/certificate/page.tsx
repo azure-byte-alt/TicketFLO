@@ -10,13 +10,14 @@ export default async function CertificatePage() {
 
   const supabase = createClient()
 
+  // Get user profile
   const { data: profile } = await supabase
     .from('users')
     .select('first_name, last_name')
     .eq('id', userInfo.id)
     .single()
 
-  // Two-step query to fix data loading
+  // Two-step query
   const { data: submissions } = await supabase
     .from('submissions')
     .select('id')
@@ -36,11 +37,16 @@ export default async function CertificatePage() {
     ? Math.round((feedbackData as any[]).reduce((sum, f) => sum + f.score, 0) / totalTickets)
     : 0
 
-  const fullName = profile
-    ? `${profile.first_name} ${profile.last_name || ''}`.trim()
-    : 'Learner'
+  // Use decoded token name as fallback
+  const firstName = profile?.first_name ?? userInfo.fullName?.split(' ')[0] ?? null
+  const lastName = profile?.last_name ?? userInfo.fullName?.split(' ').slice(1).join(' ') ?? null
+  const fullName = firstName ? `${firstName} ${lastName || ''}`.trim() : userInfo.fullName ?? 'Learner'
 
-  const scoreLabel = avgScore >= 80 ? 'Distinction' : avgScore >= 65 ? 'Proficient' : 'Foundational'
+  // Performance level based on avg score
+  const performanceLevel =
+    avgScore >= 80 ? 'Advanced Practitioner' :
+    avgScore >= 65 ? 'Proficient Practitioner' :
+    'Certified Practitioner'
 
   // Not enough tickets yet
   if (totalTickets < 3) {
@@ -53,8 +59,6 @@ export default async function CertificatePage() {
             Complete at least <strong>3 practice tickets</strong> to earn your certificate.
             You have completed <strong>{totalTickets}</strong> so far.
           </p>
-
-          {/* Progress bar */}
           <div className="mb-6">
             <div className="flex justify-between text-xs text-gray-400 mb-1.5">
               <span>{totalTickets} completed</span>
@@ -67,7 +71,6 @@ export default async function CertificatePage() {
               />
             </div>
           </div>
-
           <Link
             href="/practice"
             className="inline-block bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 no-underline"
@@ -87,27 +90,33 @@ export default async function CertificatePage() {
         <p className="text-[13px] text-gray-500 mt-1">Share your achievement</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 max-w-3xl mx-auto overflow-hidden shadow-sm">
+      <div className="bg-white rounded-2xl border-2 border-emerald-100 max-w-3xl mx-auto overflow-hidden shadow-sm">
 
-        {/* Certificate header — light */}
+        {/* Header */}
         <div className="bg-emerald-700 px-10 py-6">
           <p className="text-white font-bold text-lg tracking-tight">TicketFLO Training</p>
-          <p className="text-emerald-200 text-sm mt-0.5">IT Help Desk Certificate Program</p>
+          <p className="text-emerald-200 text-sm mt-0.5">IT Help Desk Professional Development</p>
         </div>
 
-        {/* Certificate body */}
+        {/* Body */}
         <div className="px-10 py-10 text-center">
           <p className="text-gray-400 text-xs uppercase tracking-widest font-semibold mb-4">
             Certificate of Completion
           </p>
           <p className="text-gray-500 text-sm mb-4">This certifies that</p>
           <h2 className="text-4xl font-bold text-gray-900 mb-6">{fullName}</h2>
-          <p className="text-gray-500 text-sm mb-6">has successfully completed the</p>
+          <p className="text-gray-500 text-sm mb-2">has successfully completed the</p>
 
-          <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-8 py-4 mb-8 inline-block">
-            <p className="text-gray-900 font-bold text-xl">IT Help Desk Ticket Writing</p>
-            <p className="text-emerald-700 font-semibold text-sm mt-1">Foundational Training Program</p>
+          <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-8 py-5 mb-3 inline-block">
+            <p className="text-gray-900 font-bold text-xl">TicketFLO Process</p>
+            <p className="text-emerald-700 font-semibold text-sm mt-1">
+              Handling Support Issues & Writing Quality Help Desk Tickets
+            </p>
           </div>
+
+          <p className="text-gray-400 text-xs mb-8">
+            Including: Listen · Probe · Troubleshoot · Document · Resolve / Escalate · Improve
+          </p>
 
           <div className="grid grid-cols-3 gap-6 mb-4">
             <div>
@@ -115,7 +124,7 @@ export default async function CertificatePage() {
               <div className="text-xs text-gray-400 mt-1">Average Score</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-emerald-700">{scoreLabel}</div>
+              <div className="text-2xl font-bold text-emerald-700">{performanceLevel}</div>
               <div className="text-xs text-gray-400 mt-1">Performance Level</div>
             </div>
             <div>
