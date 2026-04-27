@@ -12,74 +12,28 @@ function getPriority(scenario: Scenario): string {
   return 'Medium'
 }
 
-function playRingTone() {
-  try {
-    const ctx = new ((window as any).AudioContext || (window as any).webkitAudioContext)()
-    const playBeep = (time: number) => {
-      [0, 0.25].forEach(offset => {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.type = 'sine'
-        osc.frequency.setValueAtTime(480, ctx.currentTime + time + offset)
-        gain.gain.setValueAtTime(0.15, ctx.currentTime + time + offset)
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + time + offset + 0.22)
-        osc.start(ctx.currentTime + time + offset)
-        osc.stop(ctx.currentTime + time + offset + 0.22)
-      })
-    }
-    playBeep(0); playBeep(0.8); playBeep(1.6)
-  } catch (e) {}
-}
-
-const priorityColors: Record<string, { bg: string; text: string }> = {
-  Critical: { bg: 'bg-red-100', text: 'text-red-700' },
-  High: { bg: 'bg-orange-100', text: 'text-orange-700' },
-  Medium: { bg: 'bg-yellow-100', text: 'text-yellow-700' },
-  Low: { bg: 'bg-green-100', text: 'text-green-700' },
+const priorityStyle: Record<string, { color: string; bg: string }> = {
+  Critical: { color: '#c0392b', bg: '#fff0f0' },
+  High:     { color: '#b45309', bg: '#fffbeb' },
+  Medium:   { color: '#b45309', bg: '#fffbeb' },
+  Low:      { color: '#0e7c5b', bg: '#f0faf6' },
 }
 
 export default function WorkspaceClient({ scenarios }: { scenarios: Scenario[] }) {
   const router = useRouter()
-  const [phase, setPhase] = useState<'idle' | 'ringing' | 'active'>('idle')
   const [selected, setSelected] = useState<Scenario | null>(null)
   const [ticket, setTicket] = useState({
-    title: '',
-    priority: '',
-    category: '',
-    impact: '',
-    description: '',
-    steps: '',
-    resolution: '',
+    title: '', priority: '', category: '',
+    impact: '', description: '', steps: '', resolution: '',
   })
 
   useEffect(() => {
-    if (scenarios.length > 0) {
-      triggerCall(scenarios[0])
-    }
+    if (scenarios.length > 0) selectScenario(scenarios[0])
   }, [])
 
-  useEffect(() => {
-    if (phase !== 'ringing') return
-    playRingTone()
-    const interval = setInterval(playRingTone, 3000)
-    return () => clearInterval(interval)
-  }, [phase])
-
-  function triggerCall(scenario: Scenario) {
+  function selectScenario(scenario: Scenario) {
     setSelected(scenario)
     setTicket({ title: '', priority: '', category: '', impact: '', description: '', steps: '', resolution: '' })
-    setPhase('ringing')
-  }
-
-  function answerCall() {
-    setPhase('active')
-  }
-
-  function declineCall() {
-    setPhase('idle')
-    setSelected(null)
   }
 
   function handleSubmit() {
@@ -89,50 +43,54 @@ export default function WorkspaceClient({ scenarios }: { scenarios: Scenario[] }
   const canSubmit = ticket.title.length > 0 && ticket.priority !== '' && ticket.category !== '' && ticket.description.length > 20
 
   const qaChecklist = [
-    { label: 'Ticket title written', done: ticket.title.length > 10 },
-    { label: 'Priority selected', done: ticket.priority !== '' },
-    { label: 'Category selected', done: ticket.category !== '' },
-    { label: 'User impact noted', done: ticket.impact !== '' },
-    { label: 'Description complete', done: ticket.description.length > 60 },
-    { label: 'Steps taken recorded', done: ticket.steps.length > 10 },
-    { label: 'Resolution noted', done: ticket.resolution.length > 5 },
+    { label: 'Ticket title written',  done: ticket.title.length > 10 },
+    { label: 'Priority selected',     done: ticket.priority !== '' },
+    { label: 'Category selected',     done: ticket.category !== '' },
+    { label: 'User impact noted',     done: ticket.impact !== '' },
+    { label: 'Description complete',  done: ticket.description.length > 60 },
+    { label: 'Steps taken recorded',  done: ticket.steps.length > 10 },
+    { label: 'Resolution noted',      done: ticket.resolution.length > 5 },
   ]
   const qaScore = qaChecklist.filter(q => q.done).length
+  const qaPercent = Math.round((qaScore / qaChecklist.length) * 100)
+
+  const priority = selected ? getPriority(selected) : 'Medium'
+  const pStyle = priorityStyle[priority]
 
   return (
-    <div className="flex h-full bg-[#f8fafc]">
+    <div className="flex h-full bg-gray-50 font-sans">
 
-      {/* LEFT — Scenario Queue */}
-      <div className="w-64 bg-white border-r border-gray-100 flex flex-col flex-shrink-0">
+      {/* ── Left queue ───────────────────────────────────── */}
+      <div className="w-56 bg-white border-r border-gray-100 flex flex-col flex-shrink-0">
         <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-          <span className="text-sm font-bold text-[#1a2744]">Ticket Queue</span>
-          <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">
+          <span className="text-[12px] font-bold text-gray-900">Ticket Queue</span>
+          <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-semibold">
             {scenarios.length} open
           </span>
         </div>
         <div className="overflow-y-auto flex-1">
           {scenarios.map((s) => {
             const p = getPriority(s)
-            const pc = priorityColors[p]
+            const ps = priorityStyle[p]
             const isActive = selected?.id === s.id
             return (
               <div
                 key={s.id}
-                onClick={() => triggerCall(s)}
-                className={`px-4 py-3 border-b border-gray-50 cursor-pointer transition-all ${
-                  isActive
-                    ? 'bg-[#f0fdfa] border-l-2 border-l-[#4db8a4]'
-                    : 'hover:bg-gray-50 border-l-2 border-l-transparent'
+                onClick={() => selectScenario(s)}
+                className={`px-4 py-3 border-b border-gray-50 cursor-pointer transition-all border-l-2 ${
+                  isActive ? 'bg-emerald-50 border-l-emerald-600' : 'border-l-transparent hover:bg-gray-50'
                 }`}
               >
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-xs">📞</span>
-                  <p className={`text-xs font-semibold leading-snug ${isActive ? 'text-[#0f172a]' : 'text-[#334155]'}`}>
+                <div className="flex items-start gap-2 mb-1">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{marginTop:2,flexShrink:0}}>
+                    <path d="M14 10.67v2a1.33 1.33 0 01-1.45 1.33 13.18 13.18 0 01-5.75-2.05 13 13 0 01-4-4 13.18 13.18 0 01-2.05-5.78A1.33 1.33 0 012.07 1h2a1.33 1.33 0 011.33 1.15c.08.6.23 1.19.43 1.76a1.33 1.33 0 01-.3 1.4L4.79 6.06a10.67 10.67 0 004 4l.75-.75a1.33 1.33 0 011.4-.3c.57.2 1.16.35 1.76.43A1.33 1.33 0 0114 10.67z" stroke={isActive ? '#0e7c5b' : '#9ea8b8'} strokeWidth="1.3"/>
+                  </svg>
+                  <p className={`text-[12px] font-medium leading-snug ${isActive ? 'text-emerald-800' : 'text-gray-700'}`}>
                     {s.title}
                   </p>
                 </div>
-                <p className="text-xs text-gray-400 mb-1.5">{s.category}</p>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${pc.bg} ${pc.text}`}>
+                <p className="text-[11px] text-gray-400 mb-1.5 ml-5">{s.category}</p>
+                <span className="ml-5 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: ps.color, background: ps.bg }}>
                   {p}
                 </span>
               </div>
@@ -141,123 +99,104 @@ export default function WorkspaceClient({ scenarios }: { scenarios: Scenario[] }
         </div>
       </div>
 
-      {/* CENTER — Main workspace */}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
+      {/* ── Center ───────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
 
-        {/* PHONE RINGING OVERLAY */}
-        {phase === 'ringing' && selected && (
-          <div className="absolute inset-0 bg-[#0f1923]/90 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 w-80 text-center">
-              <div className="relative inline-flex items-center justify-center mb-5">
-                <div className="absolute w-20 h-20 bg-[#4db8a4]/20 rounded-full animate-ping" />
-                <div className="absolute w-16 h-16 bg-[#4db8a4]/30 rounded-full animate-ping" style={{ animationDelay: '0.3s' }} />
-                <div className="relative w-14 h-14 bg-[#1a2744] rounded-full flex items-center justify-center text-2xl">
-                  📞
-                </div>
-              </div>
-              <p className="text-xs font-semibold text-[#4db8a4] uppercase tracking-widest mb-1">Incoming Call</p>
-              <h2 className="text-xl font-bold text-[#1a2744] mb-0.5">{selected.caller_name || 'Unknown Caller'}</h2>
-              <p className="text-sm text-gray-500 mb-0.5">{selected.department || 'Unknown Department'}</p>
-              {selected.scenario_number && (
-                <p className="text-xs text-gray-400 mb-6">Ext: {1000 + selected.scenario_number} · Building A</p>
-              )}
-              <div className="flex gap-3">
-                <button
-                  onClick={declineCall}
-                  className="flex-1 py-3 rounded-xl bg-red-100 text-red-600 font-semibold text-sm hover:bg-red-200 transition"
-                >
-                  📵 Decline
-                </button>
-                <button
-                  onClick={answerCall}
-                  className="flex-1 py-3 rounded-xl bg-[#1a2744] text-white font-semibold text-sm hover:bg-[#243456] transition"
-                >
-                  ✅ Answer
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* IDLE STATE */}
-        {phase === 'idle' && (
+        {!selected ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center text-gray-400">
-              <div className="text-5xl mb-4">📞</div>
-              <p className="font-medium">Select a ticket from the queue to receive the call</p>
+              <svg width="40" height="40" viewBox="0 0 16 16" fill="none" style={{margin:'0 auto 12px'}}>
+                <path d="M14 10.67v2a1.33 1.33 0 01-1.45 1.33 13.18 13.18 0 01-5.75-2.05 13 13 0 01-4-4 13.18 13.18 0 01-2.05-5.78A1.33 1.33 0 012.07 1h2a1.33 1.33 0 011.33 1.15c.08.6.23 1.19.43 1.76a1.33 1.33 0 01-.3 1.4L4.79 6.06a10.67 10.67 0 004 4l.75-.75a1.33 1.33 0 011.4-.3c.57.2 1.16.35 1.76.43A1.33 1.33 0 0114 10.67z" stroke="#d1d5db" strokeWidth="1.3"/>
+              </svg>
+              <p className="text-[13px]">Select a scenario from the queue to get started</p>
             </div>
           </div>
-        )}
-
-        {/* ACTIVE — Scenario + Ticket Form */}
-        {phase === 'active' && selected && (
-          <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
-
+        ) : (
+          <>
             {/* Scenario card */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="bg-[#1a2744] px-5 py-4">
-                <div className="flex items-center justify-between">
+            <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+              <div className="bg-emerald-50 border-b border-emerald-100 px-5 py-4">
+                <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-[#4db8a4] text-xs font-bold uppercase tracking-widest mb-1">
-                      📞 Incoming Call — Scenario #{selected.scenario_number?.toString().padStart(3, '0') ?? '001'}
-                    </p>
-                    <h2 className="text-white text-lg font-bold">{selected.title}</h2>
-                    <p className="text-gray-400 text-sm mt-0.5">
-                      {selected.caller_name && <span className="font-medium text-gray-300">{selected.caller_name}</span>}
+                    <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-1">
+                      Scenario #{selected.scenario_number?.toString().padStart(3, '0') ?? '001'} · {selected.category}
+                    </div>
+                    <h2 className="text-[16px] font-bold text-gray-900 leading-snug">{selected.title}</h2>
+                    <p className="text-[12px] text-gray-500 mt-1">
+                      {selected.caller_name && <span className="font-medium text-gray-600">{selected.caller_name}</span>}
                       {selected.department && <span> · {selected.department}</span>}
                       {selected.scenario_number && <span> · Ext: {1000 + selected.scenario_number}</span>}
                     </p>
                   </div>
-                  <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${priorityColors[getPriority(selected)].bg} ${priorityColors[getPriority(selected)].text}`}>
-                    {selected.category}
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0" style={{ color: pStyle.color, background: pStyle.bg }}>
+                    {priority}
                   </span>
                 </div>
               </div>
+
               <div className="px-5 py-4">
-                <div className="border-l-4 border-[#4db8a4] pl-4 bg-[#f8fafc] py-3 rounded-r-lg">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Caller says:</p>
-                  <p className="text-sm text-[#334155] leading-relaxed">{selected.situation_text || selected.description}</p>
+                <div className="border-l-4 border-emerald-500 pl-4 bg-gray-50 py-3 rounded-r-lg" style={{borderRadius:'0 8px 8px 0'}}>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Caller says</p>
+                  <p className="text-[13px] text-gray-700 leading-relaxed">{selected.situation_text || (selected as any).description}</p>
                   {selected.error_message && (
-                    <p className="text-xs text-red-600 mt-2 font-mono bg-red-50 px-2 py-1 rounded">Error: {selected.error_message}</p>
+                    <p className="text-[11px] text-red-600 mt-2 font-mono bg-red-50 px-2 py-1 rounded">
+                      Error: {selected.error_message}
+                    </p>
                   )}
                   {selected.urgency_note && (
-                    <p className="text-xs text-orange-600 mt-2 font-semibold">⚡ {selected.urgency_note}</p>
+                    <p className="text-[11px] text-amber-700 mt-2 font-semibold bg-amber-50 px-2 py-1 rounded">
+                      ⚡ {selected.urgency_note}
+                    </p>
                   )}
+                </div>
+
+                {/* Caller detail chips */}
+                <div className="grid grid-cols-4 gap-2 mt-3">
+                  {[
+                    { label: 'Caller', val: selected.caller_name || '—' },
+                    { label: 'Department', val: selected.department || '—' },
+                    { label: 'Priority hint', val: priority },
+                    { label: 'Category', val: selected.category || '—' },
+                  ].map(({ label, val }) => (
+                    <div key={label} className="bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                      <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">{label}</div>
+                      <div className="text-[12px] font-medium text-gray-700 truncate">{val}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Ticket Form */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            {/* Ticket form */}
+            <div className="bg-white border border-gray-100 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-[#1a2744]">✍️ Write the Ticket</h3>
-                <span className="text-xs text-gray-400">* Required fields</span>
+                <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Write the Ticket</div>
+                <span className="text-[11px] text-gray-400">* required</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-
+              <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide block mb-1">
                     Subject / Title <span className="text-red-400">*</span>
                   </label>
                   <input
                     value={ticket.title}
                     onChange={e => setTicket({ ...ticket, title: e.target.value })}
                     placeholder="Brief, clear description of the issue..."
-                    className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4db8a4] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide block mb-1">
                     Priority <span className="text-red-400">*</span>
                   </label>
                   <select
                     value={ticket.priority}
                     onChange={e => setTicket({ ...ticket, priority: e.target.value })}
-                    className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4db8a4] bg-white"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white transition"
                   >
-                    <option value="">-- Select Priority --</option>
+                    <option value="">— Select Priority —</option>
                     <option>Low</option>
                     <option>Medium</option>
                     <option>High</option>
@@ -266,15 +205,15 @@ export default function WorkspaceClient({ scenarios }: { scenarios: Scenario[] }
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide block mb-1">
                     Category <span className="text-red-400">*</span>
                   </label>
                   <select
                     value={ticket.category}
                     onChange={e => setTicket({ ...ticket, category: e.target.value })}
-                    className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4db8a4] bg-white"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white transition"
                   >
-                    <option value="">-- Select Category --</option>
+                    <option value="">— Select Category —</option>
                     <option>Hardware</option>
                     <option>Software / Apps</option>
                     <option>Network / Connectivity</option>
@@ -290,13 +229,15 @@ export default function WorkspaceClient({ scenarios }: { scenarios: Scenario[] }
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">User Impact</label>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide block mb-1">
+                    User Impact
+                  </label>
                   <select
                     value={ticket.impact}
                     onChange={e => setTicket({ ...ticket, impact: e.target.value })}
-                    className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4db8a4] bg-white"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white transition"
                   >
-                    <option value="">-- Select Impact --</option>
+                    <option value="">— Select Impact —</option>
                     <option>User unable to work</option>
                     <option>User can partially work</option>
                     <option>Minor inconvenience</option>
@@ -306,17 +247,19 @@ export default function WorkspaceClient({ scenarios }: { scenarios: Scenario[] }
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Steps Already Taken</label>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide block mb-1">
+                    Steps Already Taken
+                  </label>
                   <input
                     value={ticket.steps}
                     onChange={e => setTicket({ ...ticket, steps: e.target.value })}
                     placeholder="e.g. Restarted PC, checked cables..."
-                    className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4db8a4]"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                   />
                 </div>
 
                 <div className="col-span-2">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide block mb-1">
                     Full Description <span className="text-red-400">*</span>
                   </label>
                   <textarea
@@ -324,87 +267,100 @@ export default function WorkspaceClient({ scenarios }: { scenarios: Scenario[] }
                     onChange={e => setTicket({ ...ticket, description: e.target.value })}
                     placeholder="Describe the issue in detail. Include: what happened, when it started, what was already tried, and any error messages..."
                     rows={4}
-                    className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4db8a4] resize-none"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none transition"
                   />
                 </div>
 
                 <div className="col-span-2">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Resolution / Next Action</label>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide block mb-1">
+                    Resolution / Next Action
+                  </label>
                   <input
                     value={ticket.resolution}
                     onChange={e => setTicket({ ...ticket, resolution: e.target.value })}
                     placeholder="e.g. Dispatched tech, escalated to Tier 2, resolved remotely..."
-                    className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4db8a4]"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 mt-5 pt-4 border-t border-gray-100">
+              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
                 <button
                   onClick={() => setTicket({ title: '', priority: '', category: '', impact: '', description: '', steps: '', resolution: '' })}
-                  className="px-4 py-2.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                  className="px-4 py-2 text-[12px] text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
                 >
                   Clear
                 </button>
                 <button
-                  onClick={() => triggerCall(scenarios[Math.floor(Math.random() * scenarios.length)])}
-                  className="px-4 py-2.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                  onClick={() => selectScenario(scenarios[Math.floor(Math.random() * scenarios.length)])}
+                  className="px-4 py-2 text-[12px] text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
                 >
                   Next Scenario →
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={!canSubmit}
-                  className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition ${
+                  className={`flex-1 py-2.5 rounded-lg text-[13px] font-bold transition-all duration-200 ${
                     canSubmit
-                      ? 'bg-[#1a2744] hover:bg-[#243456] text-white'
+                      ? 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm hover:shadow-md'
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   }`}
                 >
-                  ✓ Submit Ticket
+                  {canSubmit ? 'Submit for AI Coaching →' : 'Complete required fields to submit'}
                 </button>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
 
-      {/* RIGHT — QA Checklist */}
-      <div className="w-56 bg-white border-l border-gray-100 flex flex-col flex-shrink-0">
-        <div className="px-4 py-3 bg-[#1a2744] flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-[#4db8a4] flex items-center justify-center text-white text-xs font-bold">QA</div>
-          <div>
-            <p className="text-white text-xs font-bold">QA Checklist</p>
-            <p className="text-[#4db8a4] text-xs">{qaScore}/{qaChecklist.length} complete</p>
+      {/* ── Right — QA Checklist ──────────────────────────── */}
+      <div className="w-52 bg-white border-l border-gray-100 flex flex-col flex-shrink-0">
+        <div className="px-4 py-3 border-b border-gray-100">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
+              <span style={{fontSize:10,fontWeight:700,color:'#0e7c5b'}}>QA</span>
+            </div>
+            <span className="text-[12px] font-bold text-gray-900">QA Checklist</span>
+          </div>
+          <div className="text-[11px] text-gray-400">{qaScore}/{qaChecklist.length} complete</div>
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-2">
+            <div
+              className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+              style={{ width: `${qaPercent}%` }}
+            />
           </div>
         </div>
-        <div className="p-4 flex-1">
-          <div className="flex flex-col gap-2.5">
+
+        <div className="p-4 flex-1 overflow-y-auto">
+          <div className="space-y-2.5 mb-5">
             {qaChecklist.map((item, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs transition-all ${item.done ? 'bg-[#4db8a4]' : 'bg-gray-200'}`}>
-                  {item.done ? '✓' : ''}
+              <div key={i} className="flex items-center gap-2.5">
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${item.done ? 'bg-emerald-600' : 'border border-gray-200 bg-white'}`}>
+                  {item.done && (
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                      <path d="M1.5 4l2 2 3-3" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
                 </div>
-                <span className={`text-xs transition-all ${item.done ? 'text-[#1a2744] font-medium' : 'text-gray-400'}`}>
+                <span className={`text-[11px] transition-all ${item.done ? 'text-emerald-700 font-medium' : 'text-gray-400'}`}>
                   {item.label}
                 </span>
               </div>
             ))}
           </div>
-          <div className="mt-4 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div className="h-full bg-[#4db8a4] rounded-full transition-all duration-500" style={{ width: `${(qaScore / qaChecklist.length) * 100}%` }} />
-          </div>
-          <div className="mt-5 space-y-3">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Quick Tips</p>
-            <div className="p-3 bg-blue-50 border-l-2 border-blue-400 rounded-r-lg text-xs text-blue-800 leading-relaxed">
-              💡 A strong title includes WHO is affected + WHAT the issue is.
+
+          <div className="space-y-2.5">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Quick Tips</p>
+            <div className="bg-blue-50 border-l-2 border-blue-400 pl-3 pr-2 py-2 rounded-r-lg" style={{borderRadius:'0 6px 6px 0'}}>
+              <p className="text-[11px] text-blue-800 leading-relaxed">A strong title includes WHO is affected + WHAT the issue is.</p>
             </div>
-            <div className="p-3 bg-amber-50 border-l-2 border-amber-400 rounded-r-lg text-xs text-amber-800 leading-relaxed">
-              ! Priority is based on business impact — not how upset the caller sounds.
+            <div className="bg-amber-50 border-l-2 border-amber-400 pl-3 pr-2 py-2 rounded-r-lg" style={{borderRadius:'0 6px 6px 0'}}>
+              <p className="text-[11px] text-amber-800 leading-relaxed">Priority is based on business impact — not how upset the caller sounds.</p>
             </div>
             {qaScore >= 5 && (
-              <div className="p-3 bg-green-50 border-l-2 border-green-400 rounded-r-lg text-xs text-green-800 leading-relaxed">
-                ✓ Looking strong! Submit when ready.
+              <div className="bg-emerald-50 border-l-2 border-emerald-500 pl-3 pr-2 py-2 rounded-r-lg" style={{borderRadius:'0 6px 6px 0'}}>
+                <p className="text-[11px] text-emerald-800 leading-relaxed font-medium">Looking strong! Submit for AI coaching when ready.</p>
               </div>
             )}
           </div>
